@@ -1,246 +1,206 @@
-# whatbot — WhatsApp AI Bot 🤖
+# whatbot 🤖
 
-A production-ready WhatsApp bot powered by **Google Gemini** and **Groq** LLMs, built with FastAPI. Designed to run 24/7 with proper hosting support.
+A WhatsApp bot powered by **Google Gemini** and **Groq** (both free tiers) built with [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js).
 
----
+## Features
 
-## ✨ Features
-
-- **Dual LLM support** — Google Gemini as primary, Groq as automatic fallback
-- **Session management** — per-user conversation history (in-memory, configurable TTL)
-- **Rate limiting** — protects against abuse
-- **Docker ready** — one-command local development
-- **Railway / Render / Heroku ready** — deploy in minutes
-- **Structured logging** — easy debugging in production
-- **Webhook verification** — secure Meta WhatsApp Cloud API integration
+- 💬 Replies to WhatsApp messages using AI
+- 🔀 Supports **two free LLM providers** – Google Gemini & Groq – with automatic round-robin / fallback
+- 🔒 QR-code authentication with session persistence (scan once, keep running)
+- ⚙️ Configurable via a single `.env` file
+- 🔤 Optional command prefix (e.g. `!bot`) and group-message toggle
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 whatbot/
-├── app/
-│   ├── main.py                # FastAPI application entry point
-│   ├── config.py              # Configuration from environment variables
-│   ├── routes/
-│   │   ├── health.py          # GET /health  and  GET /
-│   │   └── webhook.py         # GET & POST /webhook  (WhatsApp)
-│   ├── services/
-│   │   ├── llm.py             # Google Gemini + Groq integration
-│   │   ├── whatsapp.py        # Send messages via Meta Cloud API
-│   │   ├── message.py         # Orchestrates LLM + WhatsApp
-│   │   └── session.py         # In-memory session / history management
-│   ├── models/
-│   │   └── schemas.py         # Pydantic models
-│   └── utils/
-│       ├── logger.py          # Structured logging
-│       └── validators.py      # Input sanitization & validation
-├── tests/
-│   ├── test_webhook.py
-│   └── test_llm.py
-├── examples/
-│   └── test_requests.http     # VSCode REST Client examples
-├── .env.example               # Environment variable template
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── Procfile                   # Heroku
-├── README.md
-├── DEPLOYMENT.md
-├── API_DOCUMENTATION.md
-└── VSCODE_SETUP.md
+├── src/
+│   ├── index.js        ← entry point
+│   ├── bot.js          ← WhatsApp client & message handler
+│   ├── config.js       ← reads .env and validates keys
+│   └── llm/
+│       ├── index.js    ← routes messages to Gemini or Groq
+│       ├── gemini.js   ← Google Gemini integration
+│       └── groq.js     ← Groq integration
+├── .env.example        ← copy this to .env and fill your keys
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 🔑 Required API Keys
+## Prerequisites
 
-| Service | Where to get | `.env` variable |
-|---------|-------------|-----------------|
-| Google Gemini | https://aistudio.google.com/app/apikey | `GOOGLE_API_KEY` |
-| Groq | https://console.groq.com/keys | `GROQ_API_KEY` |
-| WhatsApp Cloud API | https://developers.facebook.com → WhatsApp product | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID` |
+| Tool | Version | Download |
+|------|---------|----------|
+| Node.js | ≥ 18 | https://nodejs.org |
+| npm | comes with Node.js | – |
+| Google Chrome / Chromium | latest | auto-installed by Puppeteer |
+
+> **Windows users:** Puppeteer (used by whatsapp-web.js) may need Visual C++ build tools.  
+> Run `npm install --global windows-build-tools` in an **Admin** PowerShell if the install fails.
 
 ---
 
-## ⚡ Local Setup (VSCode)
+## Get Your Free API Keys
 
-### Prerequisites
+### 1. Google Gemini
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click **Create API key**
+4. Copy the key – you'll put it in `.env` as `GEMINI_API_KEY`
 
-- Python 3.9+
-- Git
-- [VSCode](https://code.visualstudio.com/)
+### 2. Groq
+1. Go to [Groq Console](https://console.groq.com/keys)
+2. Sign up for a free account
+3. Click **Create API key**
+4. Copy the key – you'll put it in `.env` as `GROQ_API_KEY`
 
-### Step 1 — Clone the repository
+---
+
+## Local Setup (VSCode)
+
+### Step 1 – Clone the repository
+
+Open a terminal in VSCode (`Ctrl+` `` ` ``) and run:
 
 ```bash
 git clone https://github.com/IITGoaPyVidya/whatbot.git
 cd whatbot
 ```
 
-### Step 2 — Create a virtual environment
-
-**Windows (PowerShell):**
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-**macOS / Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 3 — Install dependencies
+### Step 2 – Install dependencies
 
 ```bash
-pip install -r requirements.txt
+npm install
 ```
 
-### Step 4 — Configure environment variables
+> This also downloads a compatible Chromium browser for Puppeteer automatically.
+
+### Step 3 – Create your `.env` file
 
 ```bash
+# On Windows (PowerShell)
+copy .env.example .env
+
+# On macOS / Linux
 cp .env.example .env
-code .env   # Opens in VSCode — fill in your API keys
 ```
 
-### Step 5 — Run the server
+Open `.env` in VSCode and fill in your API keys:
+
+```env
+GEMINI_API_KEY=AIza...yourkey...
+GROQ_API_KEY=gsk_...yourkey...
+
+# Optional settings (defaults shown)
+LLM_PROVIDER=auto          # gemini | groq | auto
+GEMINI_MODEL=gemini-1.5-flash
+GROQ_MODEL=llama3-8b-8192
+BOT_PREFIX=!bot            # leave empty to reply to every message
+RESPOND_IN_GROUPS=false
+SYSTEM_PROMPT=You are a helpful WhatsApp assistant. Keep your answers short and clear.
+```
+
+### Step 4 – Start the bot
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+npm start
 ```
 
-You should see:
-
-```
-INFO | app.main | Starting WhatsApp AI Bot (environment: development)
-INFO | uvicorn.server | Application startup complete.
-```
-
-### Step 6 — Test
+Or use the built-in **file watcher** (auto-restarts on code changes – great for development):
 
 ```bash
-# Health check
-curl http://localhost:8000/health
+npm run dev
+```
 
-# Webhook verification
-curl "http://localhost:8000/webhook?hub.mode=subscribe&hub.challenge=test&hub.verify_token=your_webhook_verify_token"
+### Step 5 – Scan the QR code
+
+A QR code will appear in your terminal. Open WhatsApp on your phone:
+
+1. **Android**: Menu (⋮) → **Linked Devices** → **Link a Device**
+2. **iPhone**: Settings → **Linked Devices** → **Link a Device**
+
+Point your camera at the QR code. The bot will print `✅ WhatsApp client is ready!` once connected.
+
+> The session is saved in `.wwebjs_auth/` so you **only need to scan once**.
+
+---
+
+## Recommended VSCode Extensions
+
+Install these for a better development experience:
+
+| Extension | ID |
+|-----------|----|
+| ESLint | `dbaeumer.vscode-eslint` |
+| Prettier | `esbenp.prettier-vscode` |
+| DotENV | `mikestead.dotenv` |
+| GitLens | `eamodio.gitlens` |
+
+Quick-install all at once (paste into VSCode terminal):
+
+```bash
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension mikestead.dotenv
+code --install-extension eamodio.gitlens
 ```
 
 ---
 
-## 🐳 Docker
+## Configuration Reference
 
-### Run with Docker Compose (recommended for local dev)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GEMINI_API_KEY` | – | **Required** – your Google Gemini API key |
+| `GROQ_API_KEY` | – | **Required** – your Groq API key |
+| `LLM_PROVIDER` | `auto` | `gemini`, `groq`, or `auto` (round-robin with fallback) |
+| `GEMINI_MODEL` | `gemini-1.5-flash` | Gemini model to use |
+| `GROQ_MODEL` | `llama3-8b-8192` | Groq model to use |
+| `BOT_PREFIX` | *(empty)* | If set, bot only replies to messages starting with this prefix |
+| `RESPOND_IN_GROUPS` | `false` | Set to `true` to enable replies in group chats |
+| `SYSTEM_PROMPT` | *see .env.example* | System prompt sent to the LLM |
 
-```bash
-docker-compose up --build
+---
+
+## How It Works
+
 ```
-
-### Build and run manually
-
-```bash
-docker build -t whatbot .
-docker run -p 8000:8000 --env-file .env whatbot
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-pytest tests/ -v
-```
-
----
-
-## 📝 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `WHATSAPP_BUSINESS_ACCOUNT_ID` | Your Meta Business Account ID | ✅ |
-| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Phone Number ID | ✅ |
-| `WHATSAPP_TOKEN` | WhatsApp Bearer Token | ✅ |
-| `WHATSAPP_WEBHOOK_TOKEN` | Token you choose for webhook verification | ✅ |
-| `GOOGLE_API_KEY` | Google Gemini API key | ✅ (or Groq) |
-| `GROQ_API_KEY` | Groq API key | ✅ (or Gemini) |
-| `GEMINI_MODEL` | Gemini model name | ❌ (default: `gemini-1.5-flash`) |
-| `GROQ_MODEL` | Groq model name | ❌ (default: `llama3-8b-8192`) |
-| `ENVIRONMENT` | `development` or `production` | ❌ |
-| `DEBUG` | Enable debug mode & API docs | ❌ (default: `false`) |
-| `LOG_LEVEL` | Logging level | ❌ (default: `INFO`) |
-| `SESSION_TTL` | Session expiry in seconds | ❌ (default: `3600`) |
-| `MAX_HISTORY_LENGTH` | Max messages per session | ❌ (default: `10`) |
-
----
-
-## 🚀 Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for full guides on:
-- Railway
-- Render
-- Heroku
-
----
-
-## 🤖 Bot Commands
-
-Users can type these commands in WhatsApp:
-
-| Command | Action |
-|---------|--------|
-| `!help` or `help` | Show available commands |
-| `!clear` or `clear history` | Clear conversation history |
-| Any other text | Get an AI response |
-
----
-
-## 🛠 Troubleshooting
-
-### `ModuleNotFoundError: No module named 'app'`
-
-Make sure you're running from the project root and your virtual environment is activated:
-
-```bash
-cd whatbot
-source venv/bin/activate   # or .\venv\Scripts\Activate.ps1 on Windows
-uvicorn app.main:app --reload
-```
-
-### WhatsApp webhook not connecting
-
-1. Make sure your server is publicly accessible (use [ngrok](https://ngrok.com/) for local testing)
-2. Verify your `WHATSAPP_WEBHOOK_TOKEN` matches what you enter in the Meta dashboard
-3. Check server logs for verification errors
-
-### LLM API errors
-
-```bash
-# Test Gemini API key
-python -c "
-import google.generativeai as genai
-genai.configure(api_key='YOUR_GOOGLE_API_KEY')
-model = genai.GenerativeModel('gemini-1.5-flash')
-print(model.generate_content('hello').text)
-"
-
-# Test Groq API key
-python -c "
-from groq import Groq
-client = Groq(api_key='YOUR_GROQ_API_KEY')
-chat = client.chat.completions.create(model='llama3-8b-8192', messages=[{'role':'user','content':'hello'}])
-print(chat.choices[0].message.content)
-"
+WhatsApp message
+      │
+      ▼
+  bot.js  ──── prefix / group filter ────►  (ignored)
+      │
+      ▼
+  llm/index.js  ──── LLM_PROVIDER=auto ────► round-robin
+      │                                        │
+      ├──────────► gemini.js ──► Gemini API   │
+      │                                        │
+      └──────────► groq.js   ──► Groq API    ◄┘
+                                    │
+                                    ▼
+                             reply sent back
+                           to WhatsApp message
 ```
 
 ---
 
-## 📚 Resources
+## Troubleshooting
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Google Gemini API](https://ai.google.dev/)
-- [Groq Documentation](https://console.groq.com/docs)
-- [Meta WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api)
-- [Railway Deployment](https://docs.railway.app/)
+| Problem | Solution |
+|---------|----------|
+| `Missing required environment variable` | Make sure `.env` exists and both API keys are filled in |
+| QR code appears repeatedly | Delete `.wwebjs_auth/` and scan again |
+| Bot doesn't reply | Check that `BOT_PREFIX` matches what you send, or leave it empty |
+| Chromium download fails | Set `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true` and install Chrome manually |
+| `Error: spawn` on Windows | Run `npm install --global windows-build-tools` as Administrator |
+
+---
+
+## License
+
+MIT

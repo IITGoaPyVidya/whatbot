@@ -52,3 +52,28 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# WhatsApp session data (generated at runtime)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/settings.json
+.vscode/launch.json
+
+# Puppeteer / Chromium cache
+.cache/
