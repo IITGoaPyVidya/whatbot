@@ -1,0 +1,112 @@
+### Health Check
+GET http://localhost:8000/health
+
+###
+
+### Root
+GET http://localhost:8000/
+
+###
+
+### Webhook Verification (replace YOUR_WEBHOOK_TOKEN with your token from .env)
+GET http://localhost:8000/webhook?hub.mode=subscribe&hub.challenge=test_challenge_123&hub.verify_token=your_webhook_verify_token
+
+###
+
+### Simulate Incoming WhatsApp Text Message
+POST http://localhost:8000/webhook
+Content-Type: application/json
+
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "ENTRY_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Test User" },
+                "wa_id": "9876543210"
+              }
+            ],
+            "messages": [
+              {
+                "from": "9876543210",
+                "id": "wamid.test123",
+                "timestamp": "1700000000",
+                "text": { "body": "Hello bot! How are you?" },
+                "type": "text"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
+
+###
+
+### Simulate Help Command
+POST http://localhost:8000/webhook
+Content-Type: application/json
+
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "changes": [
+        {
+          "value": {
+            "messages": [
+              {
+                "from": "9876543210",
+                "id": "wamid.help123",
+                "timestamp": "1700000001",
+                "text": { "body": "!help" },
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+
+###
+
+### Simulate Clear History Command
+POST http://localhost:8000/webhook
+Content-Type: application/json
+
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "changes": [
+        {
+          "value": {
+            "messages": [
+              {
+                "from": "9876543210",
+                "id": "wamid.clear123",
+                "timestamp": "1700000002",
+                "text": { "body": "!clear" },
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

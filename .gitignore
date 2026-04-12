@@ -1,3 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# Environment files
+.env
+*.env.local
+
+# IDE
+.vscode/settings.json
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# SQLite
+*.db
+*.sqlite3
+
+# Docker
+*.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
 # Dependencies
 node_modules/
 
